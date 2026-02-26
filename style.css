@@ -1,0 +1,28 @@
+.canvas {
+  background-color: white;
+}
+
+.fsn-btn {
+  width: 40px;
+  height: 40px;
+  position: absolute;
+  top: 20px;
+  right: 20px;
+}
+
+.img-block {
+  width: 288px;
+  height: 288px;
+  overflow: hidden;
+  position: relative;
+  left: 0;
+}
+
+.hero-img {
+  width: 1728px;
+  height: 1152px;
+  position: relative;
+  top: -576px;
+  left: 0;
+  transform: scale(-1, 1);
+}
