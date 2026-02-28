@@ -22,7 +22,58 @@
   width: 1728px;
   height: 1152px;
   position: relative;
-  top: -576px;
-  left: 0;
+  top: 0px;
+  /* -576px */
+  left: -288px;
   transform: scale(-1, 1);
+}
+
+/* .hit-block */
+.jump-block {
+  width: 144px;
+  height: 144px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+  opacity: 0.5;
+}
+
+.hit-block {
+  width: 144px;
+  height: 144px;
+  position: absolute;
+  top: 0;
+  right: 0;
+  overflow: hidden;
+  opacity: 0.5;
+}
+
+.hero-jump,
+.hero-hit {
+  position: absolute;
+  top: -144px;
+  left: -144px;
+  width: 864px;
+  height: 576px;
+  transform: scale(-1, 1);
+}
+
+.hero-hit {
+  top: -452px;
+  left: -442px;
+}
+
+.xz {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 140px;
+  height: 140px;
+  border: 2px solid blueviolet;
+}
+
+.xz2 {
+  right: 0;
+  border: 2px solid black;
 }
