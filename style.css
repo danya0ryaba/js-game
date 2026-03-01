@@ -11,16 +11,17 @@
 }
 
 .img-block {
-  width: 288px;
-  height: 288px;
+  width: 96px;
+  height: 96px;
   overflow: hidden;
-  position: relative;
+  position: absolute;
   left: 0;
+  bottom: 64px;
 }
 
 .hero-img {
-  width: 1728px;
-  height: 1152px;
+  width: 576px;
+  height: 384px;
   position: relative;
   top: 0px;
   /* -576px */
@@ -76,4 +77,11 @@
 .xz2 {
   right: 0;
   border: 2px solid black;
+}
+
+.background {
+  position: absolute;
+  left: 0;
+  bottom: 64px;
+  width: 100%;
 }

@@ -41,9 +41,9 @@ const rightHandler = () => {
   imgBlockPosition++;
   if (rightPosition > 5) rightPosition = 0;
 
-  heroImg.style.left = `-${rightPosition * 288}px`;
+  heroImg.style.left = `-${rightPosition * 96}px`;
 
-  heroImg.style.top = `-576px`;
+  heroImg.style.top = `-192px`;
 
   imgBlock.style.left = `${imgBlockPosition * 20}px`;
 };
@@ -54,9 +54,9 @@ const leftHandler = () => {
   imgBlockPosition--;
   if (rightPosition > 5) rightPosition = 0;
 
-  heroImg.style.left = `-${rightPosition * 288}px`;
+  heroImg.style.left = `-${rightPosition * 96}px`;
 
-  heroImg.style.top = `-576px`;
+  heroImg.style.top = `-192px`;
 
   imgBlock.style.left = `${imgBlockPosition * 20}px`;
 };
@@ -78,7 +78,7 @@ const standHandler = (event) => {
   }
 
   rightPosition++;
-  heroImg.style.left = `-${rightPosition * 288}px`;
+  heroImg.style.left = `-${rightPosition * 96}px`;
   heroImg.style.top = `0px`;
 };
 
@@ -105,8 +105,8 @@ const hitHandler = (event) => {
   }
 
   rightPosition++;
-  heroImg.style.left = `-${rightPosition * 288}px`;
-  heroImg.style.top = `-864px`;
+  heroImg.style.left = `-${rightPosition * 96}px`;
+  heroImg.style.top = `-288px`;
 };
 
 const jumpHandler = (event) => {
@@ -132,8 +132,8 @@ const jumpHandler = (event) => {
   }
 
   rightPosition++;
-  heroImg.style.left = `-${rightPosition * 288}px`;
-  heroImg.style.top = `-288px`;
+  heroImg.style.left = `-${rightPosition * 96}px`;
+  heroImg.style.top = `-96px`;
 };
 
 let timer = null;
@@ -177,8 +177,37 @@ window.ontouchstart = onTouchStart;
 window.onmouseup = onTouchEnd;
 window.ontouchend = onTouchEnd;
 
+const createTilePlatform = (startX, startY, length) => {
+  for (let i = 0; i < length; i++) {
+    createTile(startX + i, startY);
+  }
+};
+
+const createTile = (x, y = 1) => {
+  let tile = document.createElement("img");
+  tile.src = "assets/1 Tiles/Tile_02.png";
+  tile.style.position = "absolute";
+  tile.style.left = `${x * 32}px`;
+  tile.style.bottom = `${y * 32}px`;
+  canvas.appendChild(tile);
+};
+
+const addTiles = (i) => {
+  createTile(i);
+  let tileBlack = document.createElement("img");
+  tileBlack.src = "assets/1 Tiles/Tile_04.png";
+  tileBlack.style.position = "absolute";
+  tileBlack.style.left = `${i * 32}px`;
+  tileBlack.style.bottom = 0;
+  canvas.appendChild(tileBlack);
+};
+
 const start = () => {
   lifeCycle();
+  for (let i = 0; i < window.screen.width / 32; i++) {
+    addTiles(i);
+  }
+  createTilePlatform(10, 10, 10);
 };
 
 start();
