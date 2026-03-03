@@ -1,5 +1,5 @@
 .canvas {
-  background-color: white;
+  background-color: pink;
 }
 
 .fsn-btn {
@@ -11,12 +11,12 @@
 }
 
 .img-block {
-  width: 96px;
+  /* width: 96px;
   height: 96px;
   overflow: hidden;
   position: absolute;
   left: 0;
-  bottom: 64px;
+  bottom: 64px; */
 }
 
 .hero-img {
