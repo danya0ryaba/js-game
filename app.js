@@ -1,6 +1,7 @@
 const heroImg = document.querySelector("#hero-img");
 const jumpBlock = document.querySelector("#jump-block");
 const hitBlock = document.querySelector("#hit-block");
+const backgroundCanvas = document.querySelector("#background-canvas");
 
 jumpBlock.style.top = `${window.screen.height / 2 - 144 / 2}px`;
 hitBlock.style.top = `${window.screen.height / 2 - 144 / 2}px`;
@@ -43,10 +44,30 @@ let heroX = Math.floor((parseInt(imgBlock.style.left) + 32, 10) / 32);
 let heroY = Math.floor(parseInt(imgBlock.style.bottom, 10) / 32);
 
 let tileArray = [];
+let objectsArray = [];
+let enemiesArray = [];
 let heartsArray = [];
+let isRightSideBlock = false;
+let isLeftSideBlock = false;
+let wasHeroHit = false;
 
 jumpBlock.onclick = () => (jump = true);
 hitBlock.onclick = () => (hit = true);
+
+const moveWorldLeft = () => {
+  objectsArray.map((el, i) => {
+    el.style.left = `${parseInt(el.style.left) - 32}px`;
+  });
+  tileArray.map((el) => el[0]--);
+  enemiesArray.map((el) => el.moveLeft());
+};
+const moveWorldRight = () => {
+  objectsArray.map((el, i) => {
+    el.style.left = `${parseInt(el.style.left) + 32}px`;
+  });
+  tileArray.map((el) => el[0]++);
+  enemiesArray.map((el) => el.moveRight());
+};
 
 const updateHeroXY = () => {
   heroX = Math.ceil((parseInt(imgBlock.style.left) + 32) / 32);
@@ -68,33 +89,41 @@ const checkFalling = (x, y) => {
 
 const fallHandler = () => {
   heroImg.style.top = "-96px";
-  imgBlock.style.bottom = `${parseInt(imgBlock.style.bottom) - 32}px`;
+  imgBlock.style.bottom = `${parseInt(imgBlock.style.bottom, 10) - 32}px`;
   checkFalling();
 };
 
 const rightHandler = () => {
-  heroImg.style.transform = "scale(-1,1)";
-  rightPosition++;
-  imgBlockPosition++;
-  if (rightPosition > 5) rightPosition = 0;
-  heroImg.style.left = `-${rightPosition * 96}px`;
-  heroImg.style.top = `-192px`;
-  imgBlock.style.left = `${imgBlockPosition * 20}px`;
-  checkFalling();
+  if (!isLeftSideBlock) {
+    heroImg.style.transform = "scale(-1,1)";
+    rightPosition++;
+    imgBlockPosition++;
+    if (rightPosition > 5) rightPosition = 0;
+    heroImg.style.left = `-${rightPosition * 96}px`;
+    heroImg.style.top = `-192px`;
+    imgBlock.style.left = `${imgBlockPosition * 20}px`;
+    checkFalling();
+    wasHeroHit = false;
+    moveWorldLeft();
+  }
 };
 
 const leftHandler = () => {
-  heroImg.style.transform = "scale(1,1)";
-  rightPosition++;
-  imgBlockPosition--;
-  if (rightPosition > 5) rightPosition = 0;
-  heroImg.style.left = `-${rightPosition * 96}px`;
-  heroImg.style.top = `-192px`;
-  imgBlock.style.left = `${imgBlockPosition * 20}px`;
-  checkFalling();
+  if (!isLeftSideBlock) {
+    heroImg.style.transform = "scale(1,1)";
+    rightPosition++;
+    imgBlockPosition--;
+    if (rightPosition > 5) rightPosition = 0;
+    heroImg.style.left = `-${rightPosition * 96}px`;
+    heroImg.style.top = `-192px`;
+    imgBlock.style.left = `${imgBlockPosition * 20}px`;
+    checkFalling();
+    wasHeroHit = false;
+    moveWorldRight();
+  }
 };
 
-const standHandler = (event) => {
+const standHandler = () => {
   switch (direction) {
     case "right": {
       heroImg.style.transform = "scale(-1,1)";
@@ -122,6 +151,7 @@ const hitHandler = (event) => {
       if (rightPosition > 4) {
         rightPosition = 1;
         hit = false;
+        wasHeroHit = true;
       }
       break;
     }
@@ -130,6 +160,7 @@ const hitHandler = (event) => {
       if (rightPosition > 3) {
         rightPosition = 0;
         hit = false;
+        wasHeroHit = true;
       }
       break;
     }
@@ -222,26 +253,21 @@ class Enemy {
   HURT = "hurt";
   IDLE = "idle";
   WALK = "walk";
-
   state; // для состояния врага
   animateWasChanged;
-
   posX;
   posY;
   blockSize;
   spritePos; // позиция спрайта на данный момент
   spriteMaxPos;
-
   startX;
   dir;
-
   stop;
-
   img;
   block;
   timer;
-
   soucePath;
+  lives;
 
   constructor(x, y) {
     this.posX = x;
@@ -253,12 +279,13 @@ class Enemy {
     this.spritePos = 0;
     this.spriteMaxPos = 3;
     this.soucePath = "assets/Enemy/1/";
-
     this.state = this.IDLE;
     this.animateWasChanged = false;
-
+    this.animateWasChanged = false;
+    this.lives = 30;
     this.#createImg();
     this.changeAnimate(this.WALK);
+    enemiesArray.push(this);
     this.#lifeCycle();
   }
   #createImg() {
@@ -314,7 +341,9 @@ class Enemy {
       if (!this.stop) {
         this.move();
       } else {
-        this.changeAnimate(this.ATTACK);
+        this.state !== this.DEATH &&
+          this.state !== this.HURT &&
+          this.changeAnimate(this.ATTACK);
       }
       this.#animate();
     }, 140);
@@ -325,6 +354,16 @@ class Enemy {
       if (this.state === this.ATTACK) {
         lives--;
         updateHearts();
+      }
+      if (this.state === this.HURT) {
+        this.changeAnimate(this.ATTACK);
+        if (this.dir > 0) this.spritePos = 1;
+      }
+      if (this.state === this.DEATH) {
+        clearInterval(this.timer);
+        isRightSideBlock = false;
+        isLeftSideBlock = false;
+        if (this.dir > 0) this.spritePos = 5;
       }
     }
     this.img.style.left = `-${this.spritePos * this.blockSize}px`;
@@ -367,18 +406,71 @@ class Enemy {
   checkCollide() {
     if (heroY === this.posY) {
       if (heroX === this.posX) {
+        this.checkHurt();
+        isRightSideBlock = true;
         this.stop = true;
-      } else if (heroX === this.posX + 2) {
+      } else if (heroX === this.posX + 3) {
+        this.checkHurt();
+        isLeftSideBlock = true;
         this.stop = true;
-        //
       } else {
+        isLeftSideBlock = false;
+        isRightSideBlock = false;
         this.stop = false;
         this.changeAnimate(this.WALK);
       }
     } else {
+      isLeftSideBlock = false;
+      isRightSideBlock = false;
       this.stop = false;
       this.changeAnimate(this.WALK);
     }
+  }
+  checkHurt() {
+    if (wasHeroHit) {
+      if (this.lives <= 10) {
+        wasHeroHit = false;
+        this.changeAnimate(this.DEATH);
+      } else {
+        wasHeroHit = false;
+        this.changeAnimate(this.HURT);
+        this.showHurt();
+        this.lives -= 10;
+      }
+    }
+  }
+  showHurt() {
+    let pos = 0;
+    let text = document.createElement("p");
+    let blockLeft = parseInt(this.block.style.left);
+    text.textContent = "-10";
+    text.style.position = "absolute";
+    text.style.left =
+      this.dir < 0 ? `${blockLeft + 50}px` : `${blockLeft + 10}px`;
+    text.style.bottom = `${parseInt(this.block.style.bottom) + 32}px`;
+    // подключить в стилях
+    text.style.fontFamily = "'Bungee Spice', sans-serif";
+    text.style.fontWeight = 400;
+    text.style.fontStyle = "normal";
+
+    let hurtTimer = setInterval(() => {
+      text.style.bottom = `${parseInt(text.style.bottom) + 16}px`;
+      pos++;
+      if (pos > 2) {
+        clearInterval(hurtTimer);
+        text.style.display = "none";
+      }
+    }, 100);
+
+    canvas.appendChild(text);
+  }
+  moveRight() {
+    this.startX += 1;
+    this.posX += 1;
+  }
+  moveLeft() {
+    this.startX -= 1;
+    this.posX -= 1;
   }
 }
 
@@ -422,18 +514,24 @@ const createTile = (x, y = 1) => {
   tile.style.position = "absolute";
   tile.style.left = `${x * 32}px`;
   tile.style.bottom = `${y * 32}px`;
-  canvas.appendChild(tile);
+  backgroundCanvas.appendChild(tile);
+  objectsArray.push(tile);
   tileArray.push([x, y]);
+};
+
+const createTileBlack = (x, y = 0) => {
+  let tileBlack = document.createElement("img");
+  tileBlack.src = "assets/1 Tiles/Tile_04.png";
+  tileBlack.style.position = "absolute";
+  tileBlack.style.left = `${x * 32}px`;
+  tileBlack.style.bottom = `${y * 32}px`;
+  backgroundCanvas.appendChild(tileBlack);
+  objectsArray.push(tileBlack);
 };
 
 const addTiles = (i) => {
   createTile(i);
-  let tileBlack = document.createElement("img");
-  tileBlack.src = "assets/1 Tiles/Tile_04.png";
-  tileBlack.style.position = "absolute";
-  tileBlack.style.left = `${i * 32}px`;
-  tileBlack.style.bottom = 0;
-  canvas.appendChild(tileBlack);
+  createTileBlack(i);
 };
 
 const addHearts = () => {
