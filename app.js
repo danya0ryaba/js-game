@@ -152,19 +152,19 @@ const checkLeftWallCollide = () => {
 };
 
 const rightHandler = () => {
-  // if (!isLeftSideBlock && !isWallRight) {
-  heroImg.style.transform = "scale(-1,1)";
-  rightPosition++;
-  imgBlockPosition++;
-  if (rightPosition > 5) rightPosition = 0;
-  heroImg.style.left = `-${rightPosition * 96}px`;
-  heroImg.style.top = `-192px`;
-  imgBlock.style.left = `${imgBlockPosition * heroStep}px`;
-  checkFalling();
-  wasHeroHit = false;
-  moveWorldLeft();
-  checkRightWallCollide();
-  // }
+  if (!isLeftSideBlock && !isWallRight) {
+    heroImg.style.transform = "scale(-1,1)";
+    rightPosition++;
+    imgBlockPosition++;
+    if (rightPosition > 5) rightPosition = 0;
+    heroImg.style.left = `-${rightPosition * 96}px`;
+    heroImg.style.top = `-192px`;
+    imgBlock.style.left = `${imgBlockPosition * heroStep}px`;
+    checkFalling();
+    wasHeroHit = false;
+    moveWorldLeft();
+    checkRightWallCollide();
+  }
 };
 
 const leftHandler = () => {
@@ -309,6 +309,107 @@ window.ontouchstart = onTouchStart;
 window.onmouseup = onTouchEnd;
 window.ontouchend = onTouchEnd;
 
+class CutScene {
+  text;
+  block;
+  p;
+  nextButton;
+  skipButton;
+  page;
+  timer;
+  constructor(text) {
+    this.page = 0;
+    this.text = text;
+    this.block = document.createElement("div");
+    this.block.style.position = "absolute";
+    this.block.style.left = "10%";
+    this.block.style.bottom = "10vh";
+    this.block.style.width = "80%";
+    this.block.style.height = "80vh";
+    this.block.style.backgroundColor = "#38002c";
+    this.block.style.border = "5px solid #8babbf";
+    this.appendP();
+    this.appendNextButton();
+    this.appendSkipButton();
+    this.setText(this.text[this.page]);
+    canvas.appendChild(this.block);
+  }
+
+  appendP() {
+    this.p = document.createElement("p");
+    this.p.style.position = "absolute";
+    this.p.style.left = "10%";
+    this.p.style.top = "4vh";
+    this.p.style.width = "80%";
+    this.p.style.color = "#8babbf";
+    this.p.style.fontSize = "8pt";
+    this.p.style.lineHeight = "1.5";
+    this.p.style.fontFamily = "'Press Start 2P', cursive";
+    this.p.style.fontSize = "22pt";
+    this.p.style.fontWeight = "400";
+    this.p.style.fontStyle = "normal";
+    this.p.onclick = () => {
+      this.nextButton.style.display = "block";
+      clearInterval(this.timer);
+      this.p.textContent = this.text[this.page];
+    };
+    this.block.appendChild(this.p);
+  }
+  appendNextButton() {
+    this.nextButton = document.createElement("button");
+    this.setButtonStyle(this.nextButton, "Next");
+    this.nextButton.style.right = 0;
+    this.nextButton.style.display = "none";
+    this.nextButton.onclick = () => {
+      if (this.page < this.text.length - 1) {
+        this.page++;
+        this.setText(this.text[this.page]);
+        this.nextButton.style.display = "none";
+      } else {
+        this.block.style.display = "none";
+      }
+    };
+    this.block.appendChild(this.nextButton);
+  }
+  appendSkipButton() {
+    this.skipButton = document.createElement("button");
+    this.setButtonStyle(this.skipButton, "Skip");
+    this.skipButton.style.left = 0;
+    this.skipButton.onclick = () => {
+      this.block.style.display = "none";
+    };
+    this.block.appendChild(this.skipButton);
+  }
+  setButtonStyle(button, textButton) {
+    button.style.position = "absolute";
+    button.style.bottom = 0;
+    button.style.backgroundColor = "#8babbf";
+    button.style.color = "#38002c";
+    button.textContent = textButton;
+    button.style.fontSize = "20pt";
+    button.style.margin = "10pt";
+    button.style.padding = "10pt";
+    button.style.border = "none";
+    button.style.fontFamily = "'Press Start 2P', cursive";
+  }
+  setText(text) {
+    if (this.page === this.text.length - 1) this.nextButton.textContent = "Go";
+    let iinerText = "";
+    let targetText = text;
+    let pos = 0;
+    this.timer = setInterval(() => {
+      if (pos <= targetText.length - 1) {
+        iinerText += targetText[pos];
+        this.p.textContent = iinerText;
+        pos++;
+      } else {
+        clearInterval(this.timer);
+        this.nextButton.style.display = "block";
+      }
+    }, 20);
+  }
+}
+
 class Enemy {
   ATTACK = "attack";
   DEATH = "death";
@@ -320,10 +421,10 @@ class Enemy {
   posX;
   posY;
   blockSize;
-  spritePos; // позиция спрайта на данный момент
+  spritePos; // позиция спрайта на данный момент(картинки)
   spriteMaxPos;
   startX;
-  dir; //отвечает за перемещение вправо влево
+  dir; //отвечает за перемещение вправо влево (1, -1)
   stop;
   img;
   block;
@@ -592,7 +693,6 @@ class Enemy6 extends Enemy {
     this.bullet.src = this.soucePath + "Ball1.png";
     this.bullet.style.position = "absolute";
     this.bullet.style.left = this.block.style.left;
-    // console.log(this.block.style.left);
     this.bullet.style.bottom = `${parseInt(this.block.style.bottom) + 32}px`;
     this.bullet.style.transform = "scale(2,2)";
     this.bullet.style.display = "none";
@@ -651,7 +751,6 @@ class Enemy6 extends Enemy {
 
   bulletFunc() {
     this.dir > 0 ? this.bulletX++ : this.bulletX--;
-
     this.bullet.style.left = `${parseInt(this.bulletX) * 32}px`;
     if (heroX === this.bulletX && heroY === this.posY) {
       this.isShoot = false;
@@ -899,7 +998,11 @@ const start = () => {
   addHearts();
   updateHearts();
 
-  // const enemy10 = new Enemy2(5, 1);
+  // let cutScene = new CutScene([
+  //   "После неудачной попытки выследить похитетелей своей девушки, Адам был пойман недображелателями.\n\nОни решили протестировать на герое недавно украденную сверхсекретную разработку. В результате - сознание Адама было заключено в виртуальный плен.\n\nВсе это время друзья героя искали его и спустя несколько дней, наконец-то смогли выйти с ним на связь.",
+  //   "Оказалось, что из виртуального мира можно сбежать - дверь находиться за одним из фонтанов в конце первого уровня. Но, чтобы ее открыть нужно найти спрятанный рычаг и ввести код пароля. \n\nПароль состоит из 4 чисел. Цифры пароля находятся внутри тщательно охраняемых деревянных ящиков (по одной в каждом).\n\nЧто касается рычага - он спрятан на втором уровне, куда у Адама нет доступа.",
+  //   "К счастью друзья нашли способ похитить его. Но, поскольку опасность слышком велика, они передадут рычаг, только когда станут известны все цифры пароля.\n\nКогда появится рычаг у Адама будет 30 секунд чтобы найти его, подбежать к фонтану и ввести пароль. Если герой не успеет - местонохождение его друзей будет обнаружено недоброжелателями.",
+  // ]);
 };
 
 start();
