@@ -431,8 +431,10 @@ class Enemy {
   timer;
   soucePath;
   lives;
+  message;
 
-  constructor(x, y, src) {
+  constructor(x, y, src, message = "") {
+    this.message = message;
     this.posX = x + this.getRandomOffset(6);
     this.startX = x;
     this.dir = 1;
@@ -527,6 +529,7 @@ class Enemy {
         isRightSideBlock = false;
         isLeftSideBlock = false;
         if (this.dir > 0) this.spritePos = 5;
+        if (this.message) new CutScene([this.message]);
       }
     }
     this.img.style.left = `-${this.spritePos * this.blockSize}px`;
@@ -649,14 +652,14 @@ class Enemy {
 
 // нужно для переопределения кадров на анимации, тк там везде разное количество кадров
 class Enemy1 extends Enemy {
-  constructor(x, y) {
-    super(x, y, "assets/Enemy/1/");
+  constructor(x, y, message) {
+    super(x, y, "assets/Enemy/1/", message);
   }
 }
 
 class Enemy2 extends Enemy {
-  constructor(x, y) {
-    super(x, y, "assets/Enemy/2/");
+  constructor(x, y, message) {
+    super(x, y, "assets/Enemy/2/", message);
   }
   setWalk() {
     this.img.src = this.soucePath + "Walk.png";
@@ -665,8 +668,8 @@ class Enemy2 extends Enemy {
 }
 
 class Enemy5 extends Enemy {
-  constructor(x, y) {
-    super(x, y, "assets/Enemy/5/");
+  constructor(x, y, message) {
+    super(x, y, "assets/Enemy/5/", message);
   }
 
   setAttack() {
@@ -687,8 +690,8 @@ class Enemy6 extends Enemy {
   bullet;
   isShoot;
   bulletX;
-  constructor(x, y) {
-    super(x, y, "assets/Enemy/6/");
+  constructor(x, y, message) {
+    super(x, y, "assets/Enemy/6/", message);
     this.bullet = document.createElement("img");
     this.bullet.src = this.soucePath + "Ball1.png";
     this.bullet.style.position = "absolute";
@@ -786,9 +789,9 @@ class Enemy6 extends Enemy {
         isRightSideBlock = false;
         isLeftSideBlock = false;
         if (this.dir > 0) this.spritePos = 5;
+        if (this.message) new CutScene([this.message]);
       }
     }
-
     if (this.isShoot && this.state === this.ATTACK) {
       this.bulletFunc();
     } else {
@@ -950,13 +953,17 @@ const addDecorationElements = (f1, f2, f3) => {
 };
 
 const addEnemies = () => {
-  const enemy1 = new Enemy1(9, 9);
+  const enemy1 = new Enemy1(9, 9, "Обнаружена первая цифра пароля - '1'");
   const enemy2 = new Enemy6(19, 5);
-  const enemy3 = new Enemy5(44, 5);
+  const enemy3 = new Enemy5(44, 5, "Обнаружена первая цифра пароля - '2'");
   const enemy4 = new Enemy2(65, 5);
-  const enemy5 = new Enemy1(79, 1);
+  const enemy5 = new Enemy1(79, 1, "Обнаружена первая цифра пароля - '3'");
   const enemy6 = new Enemy6(93, 5);
-  const enemy7 = new Enemy2(100, 9);
+  const enemy7 = new Enemy2(
+    100,
+    9,
+    "Обнаружена первая цифра пароля - '4'\n\n Скорее ищи рычаг, у тебя мало времени",
+  );
 };
 
 const buildLevel = () => {
