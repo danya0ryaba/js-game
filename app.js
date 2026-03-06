@@ -3,6 +3,7 @@ const jumpBlock = document.querySelector("#jump-block");
 const hitBlock = document.querySelector("#hit-block");
 const backgroundCanvas = document.querySelector("#background-canvas");
 let finalTimerText = document.querySelector("#final-timer-text");
+let restartBtn = document.querySelector("#restart-btn");
 
 jumpBlock.style.top = `${window.screen.height / 2 - 144 / 2}px`;
 hitBlock.style.top = `${window.screen.height / 2 - 144 / 2}px`;
@@ -28,6 +29,10 @@ fsnBtn.onclick = () => {
   }
 };
 
+restartBtn.onclick = () => {
+  document.location.reload();
+};
+
 const halfScreen = window.screen.width / 2;
 
 let rightPosition = 0; // отвечaет за номер кадра
@@ -38,8 +43,8 @@ let hit = false;
 let jump = false;
 let fall = false;
 
-let maxLives = 6;
-let lives = 6; // текущая жизнь
+let maxLives = 8;
+let lives = 8; // текущая жизнь
 
 let heroX = Math.floor((parseInt(imgBlock.style.left) + 32, 10) / 32);
 let heroY = Math.floor(parseInt(imgBlock.style.bottom, 10) / 32);
@@ -153,34 +158,42 @@ const checkLeftWallCollide = () => {
 };
 
 const rightHandler = () => {
-  if (!isLeftSideBlock && !isWallRight) {
-    heroImg.style.transform = "scale(-1,1)";
-    rightPosition++;
-    imgBlockPosition++;
-    if (rightPosition > 5) rightPosition = 0;
-    heroImg.style.left = `-${rightPosition * 96}px`;
-    heroImg.style.top = `-192px`;
-    imgBlock.style.left = `${imgBlockPosition * heroStep}px`;
-    checkFalling();
-    wasHeroHit = false;
-    moveWorldLeft();
-    checkRightWallCollide();
+  if (!fall) {
+    if (!isLeftSideBlock && !isWallRight) {
+      heroImg.style.transform = "scale(-1,1)";
+      rightPosition++;
+      imgBlockPosition++;
+      if (rightPosition > 5) rightPosition = 0;
+      heroImg.style.left = `-${rightPosition * 96}px`;
+      heroImg.style.top = `-192px`;
+      imgBlock.style.left = `${imgBlockPosition * heroStep}px`;
+      checkFalling();
+      wasHeroHit = false;
+      moveWorldLeft();
+      checkRightWallCollide();
+    }
+  } else {
+    fallHandler();
   }
 };
 
 const leftHandler = () => {
-  if (!isLeftSideBlock && !isWallLeft) {
-    heroImg.style.transform = "scale(1,1)";
-    rightPosition++;
-    imgBlockPosition--;
-    if (rightPosition > 5) rightPosition = 0;
-    heroImg.style.left = `-${rightPosition * 96}px`;
-    heroImg.style.top = `-192px`;
-    imgBlock.style.left = `${imgBlockPosition * heroStep}px`;
-    checkFalling();
-    wasHeroHit = false;
-    moveWorldRight();
-    checkLeftWallCollide();
+  if (!fall) {
+    if (!isLeftSideBlock && !isWallLeft) {
+      heroImg.style.transform = "scale(1,1)";
+      rightPosition++;
+      imgBlockPosition--;
+      if (rightPosition > 5) rightPosition = 0;
+      heroImg.style.left = `-${rightPosition * 96}px`;
+      heroImg.style.top = `-192px`;
+      imgBlock.style.left = `${imgBlockPosition * heroStep}px`;
+      checkFalling();
+      wasHeroHit = false;
+      moveWorldRight();
+      checkLeftWallCollide();
+    }
+  } else {
+    fallHandler();
   }
 };
 
@@ -307,6 +320,27 @@ const onTouchEnd = (event) => {
 window.onmousedown = onTouchStart;
 window.ontouchstart = onTouchStart;
 
+window.onkeydown = (event) => {
+  if (!event.repeat) {
+    clearInterval(timer);
+    timer = setInterval(() => {
+      if (event.code === "KeyD") {
+        direction = "right";
+        rightHandler();
+      } else if (event.code === "KeyA") {
+        direction = "left";
+        leftHandler();
+      }
+    }, 140);
+  }
+};
+window.onkeyup = (event) => {
+  if (event.code === "KeyW" || event.code === "Space") jump = true;
+  if (event.code === "KeyE") hit = true;
+  clearInterval(timer);
+  lifeCycle();
+};
+
 window.onmouseup = onTouchEnd;
 window.ontouchend = onTouchEnd;
 
@@ -329,7 +363,6 @@ class Lever {
     this.x = heroX - 20;
     this.y = heroY;
 
-    console.log(this.fountainImg);
     this.leverImg = document.createElement("img");
     this.leverImg.src = "assets/lever.png";
     this.leverImg.style.position = "absolute";
@@ -340,7 +373,7 @@ class Lever {
     canvas.appendChild(this.leverImg);
     enemiesArray.push(this);
 
-    this.time = 15;
+    this.time = 35;
     this.dir = true;
     this.opacity = 1;
     this.updateTimer = setInterval(() => {
@@ -665,7 +698,7 @@ class Enemy {
     if (this.spritePos > this.spriteMaxPos) {
       this.spritePos = 0;
       if (this.state === this.ATTACK) {
-        lives--;
+        lives -= 0.5;
         updateHearts();
       }
       if (this.state === this.HURT) {
@@ -909,7 +942,7 @@ class Enemy6 extends Enemy {
     if (heroX === this.bulletX && heroY === this.posY) {
       this.isShoot = false;
       this.bullet.style.display = "none";
-      lives--;
+      lives -= 0.5;
       updateHearts();
     }
     if (this.dir > 0) {
@@ -1029,7 +1062,10 @@ const addHearts = () => {
 };
 
 const updateHearts = () => {
-  if (lives < 1) lives = 1;
+  if (lives <= 0) {
+    finalTimerText.textContent = "Game over";
+    imgBlock.style.display = "none";
+  }
   for (let i = 0; i < lives; i++) {
     heartsArray[i].img.style.display = "block";
   }
@@ -1129,7 +1165,7 @@ const buildLevel = () => {
   createTilePlatform(0, 14, floor1);
   createTilePlatform(33, 41, floor1);
   createTilePlatform(76, 91, floor1);
-  createTilePlatform(106, 132, floor1);
+  createTilePlatform(106, 140, floor1);
 
   createTilePlatform(15, 32, floor2);
   createTilePlatform(42, 53, floor2);
@@ -1151,19 +1187,47 @@ const buildLevel = () => {
   addEnemies();
 };
 
+const addStartScreen = () => {
+  let div = window.document.createElement("div");
+  div.style.position = "absolute";
+  div.style.left = 0;
+  div.style.bottom = 0;
+  div.style.width = "100%";
+  div.style.height = "100vh";
+  div.style.backgroundColor = "#38002c";
+  div.style.display = "grid";
+  div.style.alignItems = "center";
+  div.style.justifyContent = "center";
+  canvas.appendChild(div);
+  let btn = window.document.createElement("button");
+  btn.innerText = "PLAY";
+  btn.style.fontFamily = "'Press Start 2P', cursive";
+  btn.style.fontSize = "30pt";
+  btn.style.backgroundColor = "#8babbf";
+  btn.style.color = "#38002c";
+  btn.style.padding = "20pt 30pt";
+  btn.style.border = "none";
+
+  btn.onclick = () => {
+    div.style.display = "none";
+    fsnBtn.src = "cancel.png";
+    canvas.requestFullscreen();
+    let cutscene = new CutScene([
+      "После неудачной попытки выследить похитетелей своей девушки, Адам был пойман недображелателями.\n\nОни решили протестировать на герое недавно украденную сверхсекретную разработку. В результате - сознание Адама было заключено в виртуальный плен.\n\nВсе это время друзья героя искали его и спустя несколько дней, наконец-то смогли выйти с ним на связь.",
+      "Оказалось, что из виртуального мира можно сбежать - дверь находиться за одним из фонтанов в конце первого уровня. Но, чтобы ее открыть нужно найти спрятанный рычаг и ввести код пароля. \n\nПароль состоит из 4 чисел. Цифры пароля находятся внутри тщательно охраняемых деревянных ящиков (по одной в каждом).\n\nЧто касается рычага - он спрятан на втором уровне, куда у Адама нет доступа.",
+      "К счастью друзья нашли способ похитить его. Но, поскольку опасность слышком велика, они передадут рычаг, только когда станут известны все цифры пароля.\n\nКогда появится рычаг у Адама будет 30 секунд чтобы найти его, подбежать к фонтану и ввести пароль. Если герой не успеет - местонохождение его друзей будет обнаружено недоброжелателями.",
+    ]);
+  };
+  div.appendChild(btn);
+};
+
 const start = () => {
   addBackgroundImages();
   buildLevel();
   lifeCycle();
   addHearts();
   updateHearts();
-
-  // let cutScene = new CutScene([
-  //   "После неудачной попытки выследить похитетелей своей девушки, Адам был пойман недображелателями.\n\nОни решили протестировать на герое недавно украденную сверхсекретную разработку. В результате - сознание Адама было заключено в виртуальный плен.\n\nВсе это время друзья героя искали его и спустя несколько дней, наконец-то смогли выйти с ним на связь.",
-  //   "Оказалось, что из виртуального мира можно сбежать - дверь находиться за одним из фонтанов в конце первого уровня. Но, чтобы ее открыть нужно найти спрятанный рычаг и ввести код пароля. \n\nПароль состоит из 4 чисел. Цифры пароля находятся внутри тщательно охраняемых деревянных ящиков (по одной в каждом).\n\nЧто касается рычага - он спрятан на втором уровне, куда у Адама нет доступа.",
-  //   "К счастью друзья нашли способ похитить его. Но, поскольку опасность слышком велика, они передадут рычаг, только когда станут известны все цифры пароля.\n\nКогда появится рычаг у Адама будет 30 секунд чтобы найти его, подбежать к фонтану и ввести пароль. Если герой не успеет - местонохождение его друзей будет обнаружено недоброжелателями.",
-  // ]);
-  // new Terminal();
+  // addStartScreen();
 };
 
 start();
