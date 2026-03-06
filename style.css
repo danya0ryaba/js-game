@@ -2,6 +2,14 @@
   background-color: pink;
 }
 
+#final-timer-text {
+  position: absolute;
+  font-family: "Bungee Spice", sans-serif;
+  font-size: 200pt;
+  text-align: center;
+  width: 100%;
+}
+
 .fsn-btn {
   width: 40px;
   height: 40px;

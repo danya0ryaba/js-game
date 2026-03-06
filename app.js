@@ -2,6 +2,7 @@ const heroImg = document.querySelector("#hero-img");
 const jumpBlock = document.querySelector("#jump-block");
 const hitBlock = document.querySelector("#hit-block");
 const backgroundCanvas = document.querySelector("#background-canvas");
+let finalTimerText = document.querySelector("#final-timer-text");
 
 jumpBlock.style.top = `${window.screen.height / 2 - 144 / 2}px`;
 hitBlock.style.top = `${window.screen.height / 2 - 144 / 2}px`;
@@ -309,6 +310,78 @@ window.ontouchstart = onTouchStart;
 window.onmouseup = onTouchEnd;
 window.ontouchend = onTouchEnd;
 
+class Lever {
+  leverImg;
+  x;
+  y;
+  updateTimer;
+  dir;
+  opacity;
+  finalTimer;
+  time;
+  fountainImg;
+
+  constructor() {
+    this.fountainImg = objectsArray.filter(
+      (el) => el.outerHTML.split('"')[1] === "assets/3 Objects/Fountain/2.png",
+    )[0];
+
+    this.x = heroX - 20;
+    this.y = heroY;
+
+    console.log(this.fountainImg);
+    this.leverImg = document.createElement("img");
+    this.leverImg.src = "assets/lever.png";
+    this.leverImg.style.position = "absolute";
+    this.leverImg.style.left = this.x * 32 + "px";
+    this.leverImg.style.bottom = this.y * 32 + "px";
+    this.leverImg.style.width = 64 + "px";
+    this.leverImg.style.height = 64 + "px";
+    canvas.appendChild(this.leverImg);
+    enemiesArray.push(this);
+
+    this.time = 15;
+    this.dir = true;
+    this.opacity = 1;
+    this.updateTimer = setInterval(() => {
+      if (heroX === this.x + 1 && heroY === this.y) {
+        this.leverImg.style.display = "none";
+        clearInterval(this.updateTimer);
+        new CutScene(["Беги к фонтану!"]);
+      } else {
+        this.animate();
+      }
+    }, 100);
+
+    this.finalTimer = setInterval(() => {
+      if (this.time <= 0) {
+        finalTimerText.textContent = "Game over";
+        clearInterval(this.finalTimer);
+      } else {
+        finalTimerText.textContent = `${this.time}`;
+        this.time--;
+        if (heroX === parseInt(this.fountainImg.style.left) / 32) {
+          new Terminal();
+          clearInterval(this.finalTimer);
+        }
+      }
+    }, 1000);
+  }
+  animate() {
+    this.dir ? (this.opacity += 0.5) : (this.opacity -= 0.5);
+    this.leverImg.style.opacity = 1 / this.opacity;
+    if (this.opacity <= 0 || this.opacity >= 5) this.dir = !this.dir;
+  }
+  moveLeft() {
+    this.leverImg.style.left = `${parseInt(this.leverImg.style.left) - 32}px`;
+    this.x--;
+  }
+  moveRight() {
+    this.leverImg.style.left = `${parseInt(this.leverImg.style.left) + 32}px`;
+    this.x++;
+  }
+}
+
 class CutScene {
   text;
   block;
@@ -410,6 +483,80 @@ class CutScene {
   }
 }
 
+class Terminal extends CutScene {
+  btnBlock;
+  mainStrLength;
+  password;
+
+  constructor() {
+    let text = "Скорее вводи пароль : ";
+    super([text]);
+    this.password = "1123";
+    this.mainStrLength = text.length;
+    this.btnBlock = document.createElement("div");
+    this.btnBlock.style.position = "absolute";
+    this.btnBlock.style.left = "33%";
+    this.btnBlock.style.bottom = "10vh";
+    this.btnBlock.style.width = "33%";
+    this.block.appendChild(this.btnBlock);
+    this.skipButton.textContent = "Clear";
+    this.nextButton.textContent = "Enter";
+    this.createNumButtons();
+
+    this.skipButton.onclick = () => {
+      if (this.p.textContent.length > this.mainStrLength) {
+        let str = "";
+        for (let i = 0; i < this.p.textContent.length - 1; i++) {
+          str += this.p.textContent[i];
+        }
+        this.p.textContent = str;
+      }
+    };
+    this.nextButton.onclick = () => {
+      if (this.p.textContent.length === this.mainStrLength + 4) {
+        let str = "";
+        for (
+          let i = this.p.textContent.length - 4;
+          i < this.p.textContent.length;
+          i++
+        ) {
+          str += this.p.textContent[i];
+        }
+        if (str === this.password) {
+          this.block.style.display = "none";
+          finalTimerText.textContent = "You win!";
+          imgBlock.style.display = "none";
+        } else {
+          this.p.textContent = "Пароль неверный, попробуй еще раз :";
+          this.mainStrLength = this.p.textContent.length;
+        }
+      }
+    };
+  }
+
+  createNumButtons() {
+    for (let i = 1; i <= 9; i++) {
+      let button = document.createElement("button");
+      this.setButtonStyle(button, `${i}`);
+      button.style.left =
+        i <= 3
+          ? `${(i - 1) * 33}%`
+          : i <= 6
+            ? `${(i - 4) * 33}%`
+            : `${(i - 7) * 33}%`;
+      button.style.bottom = i <= 3 ? "36vh" : i <= 6 ? "18vh" : 0;
+
+      button.onclick = (event) => {
+        if (this.p.textContent.length < this.mainStrLength + 4) {
+          this.p.textContent += event.target.textContent;
+        }
+      };
+
+      this.btnBlock.appendChild(button);
+    }
+  }
+}
+
 class Enemy {
   ATTACK = "attack";
   DEATH = "death";
@@ -433,7 +580,8 @@ class Enemy {
   lives;
   message;
 
-  constructor(x, y, src, message = "") {
+  constructor(x, y, src, message = "", isLast = false) {
+    this.isLast = isLast;
     this.message = message;
     this.posX = x + this.getRandomOffset(6);
     this.startX = x;
@@ -529,7 +677,10 @@ class Enemy {
         isRightSideBlock = false;
         isLeftSideBlock = false;
         if (this.dir > 0) this.spritePos = 5;
-        if (this.message) new CutScene([this.message]);
+        if (this.message) {
+          new CutScene([this.message]);
+          if (this.isLast) new Lever();
+        }
       }
     }
     this.img.style.left = `-${this.spritePos * this.blockSize}px`;
@@ -658,8 +809,8 @@ class Enemy1 extends Enemy {
 }
 
 class Enemy2 extends Enemy {
-  constructor(x, y, message) {
-    super(x, y, "assets/Enemy/2/", message);
+  constructor(x, y, message, isLast) {
+    super(x, y, "assets/Enemy/2/", message, isLast);
   }
   setWalk() {
     this.img.src = this.soucePath + "Walk.png";
@@ -950,6 +1101,7 @@ const addDecorationElements = (f1, f2, f3) => {
   createImgEl(basePath + "/Other/Box.png", 48, f2);
   createImgEl(basePath + "/Other/Box.png", 14, f3);
   createImgEl(basePath + "/Other/Box.png", 104, f3);
+  // console.log(objectsArray);
 };
 
 const addEnemies = () => {
@@ -963,6 +1115,7 @@ const addEnemies = () => {
     100,
     9,
     "Обнаружена первая цифра пароля - '4'\n\n Скорее ищи рычаг, у тебя мало времени",
+    true,
   );
 };
 
@@ -1010,6 +1163,7 @@ const start = () => {
   //   "Оказалось, что из виртуального мира можно сбежать - дверь находиться за одним из фонтанов в конце первого уровня. Но, чтобы ее открыть нужно найти спрятанный рычаг и ввести код пароля. \n\nПароль состоит из 4 чисел. Цифры пароля находятся внутри тщательно охраняемых деревянных ящиков (по одной в каждом).\n\nЧто касается рычага - он спрятан на втором уровне, куда у Адама нет доступа.",
   //   "К счастью друзья нашли способ похитить его. Но, поскольку опасность слышком велика, они передадут рычаг, только когда станут известны все цифры пароля.\n\nКогда появится рычаг у Адама будет 30 секунд чтобы найти его, подбежать к фонтану и ввести пароль. Если герой не успеет - местонохождение его друзей будет обнаружено недоброжелателями.",
   // ]);
+  // new Terminal();
 };
 
 start();
